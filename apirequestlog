@@ -1,0 +1,58 @@
+==============================================================================================
+InvokeLLM	anonymous	05/01/2026, 1:52:43 am	
+------------------------------------------------------------------------------------------------
+Inputs
+{
+  "prompt": "Generate an AutoHotkey v2 script for Pet Simulator 99 that performs the following task:\n\nanti afk with gui to select the window you want to use the anti afk script on with an enable checkbox to start the script, use the spacebar as the key to press after the target window is selected and focused and send the spacebar press input into the window every 10 minutes, include a visible timer on the gui to show how long until the next space bar press event will be triggered or sent\n\n\nScript Type: Anti-AFK\n\nRequirements:\n- Use AutoHotkey v2 syntax\n- Include clear comments explaining each section\n- Add hotkeys to start/stop the script (F1 to toggle, F2 to exit)\n- Include safety features and error handling\n- Make it efficient and reliable\n\nReturn ONLY the AutoHotkey code without explanations.",
+  "response_json_schema": {
+    "type": "object",
+    "properties": {
+      "script": {
+        "type": "string"
+      },
+      "hotkeys": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+
+===============================================================================================
+InvokeLLM	************@outlook.com	05/01/2026, 4:15:32 am	
+-----------------------------------------------------------------------------------------------
+Inputs
+{
+  "prompt": "Test prompt: return a short AHK script that sends Space once",
+  "response_json_schema": {
+    "type": "object",
+    "properties": {
+      "script": {
+        "type": "string"
+      }
+    }
+  }
+}
+Outputs
+{
+  "script": "Send {Space}"
+}
+================================================================================================
+InvokeLLM	*************@outlook.com	05/01/2026, 3:12:21 am	
+------------------------------------------------------------------------------------------------
+Inputs
+{
+  "prompt": "Generate an AutoHotkey v2 script for Pet Simulator 99 that performs 
+             anti afk with gui to select the window and send {Space} every 10 minutes. 
+             Return ONLY the AutoHotkey code.",
+  "response_json_schema": {
+    "type": "object",
+    "properties": {
+      "script": {
+        "type": "string"
+      }
+    }
+  }
+}
+Outputs
+{
+  "script": "#Requires AutoHotkey v2.0\n\nglobal targetWindow\n\n; Create GUI \ngui := Gui()\ngui.AddText('Select the Pet Simulator 99 window:')\ngui.AddListBox('windowList', '', 'vSelectedWindow gSelectWindow')\ngui.AddButton('startButton', 'Start Anti-AFK', 'gStartAntiAFK')\ngui.AddButton('exitButton', 'Exit', 'gExit')\ngui.Show()\n\n; Populate list of windows \nWinGet, windows, List \nloop %windows% {\n    WinGetTitle, title, % \"%windows%\"  ; Get the title of the window\n    gui.windowList.Add(title)\n}\n\ngui.OnEvent('Close', gExit)\n\nreturn\n\nSelectWindow:\n    ; Store selected window title\n    gui.windowList.GetValue('vSelectedWindow', selectedTitle)\n    targetWindow := selectedTitle\n    MsgBox(0, 'Window Selected', 'You have selected: ' targetWindow)\nreturn\n\nStartAntiAFK:\n    if targetWindow\n    {\n        SetTimer(SendSpace, 600000) ; Set timer for 10 minutes (600000 ms)\n        MsgBox(0, 'Anti-AFK Started', 'Anti-AFK is now active for ' targetWindow)\n    }\n    else\n    {\n        MsgBox(0, 'Error', 'Please select a window first.')\n    }\nreturn\n\nSendSpace:\n    WinActivate, % targetWindow\n    Send, {Space}\nreturn\n\nExit:\n    ExitApp\n"
+==================================================================================================
