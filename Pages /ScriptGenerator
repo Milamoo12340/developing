@@ -1,0 +1,299 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Code, Sparkles, ArrowLeft, Download, Loader2, Wand2, FileCode
+} from "lucide-react";
+import { createPageUrl } from "@/utils";
+import toast from "react-hot-toast";
+
+export default function ScriptGenerator() {
+  const [pythonCode, setPythonCode] = useState("");
+  const [convertedCode, setConvertedCode] = useState("");
+  const [gameName, setGameName] = useState("Pet Simulator 99");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [scriptType, setScriptType] = useState("Auto-Clicker");
+  const [generatedScript, setGeneratedScript] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const convertPythonToAHK = async () => {
+    if (!pythonCode.trim()) {
+      toast.error("Please enter Python code to convert");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Convert the following Python code to AutoHotkey v2 syntax. Maintain the same functionality and logic. Provide clear comments for each section.
+
+Python Code:
+\`\`\`python
+${pythonCode}
+\`\`\`
+
+Return ONLY the AutoHotkey code without any explanations.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            ahk_code: { type: "string" },
+            version: { type: "string" },
+            notes: { type: "string" }
+          }
+        }
+      });
+
+      setConvertedCode(response.ahk_code || "Conversion failed");
+      toast.success("Your Python code has been converted to AutoHotkey");
+    } catch (error) {
+      toast.error("Unable to convert the code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateGameScript = async () => {
+    if (!taskDescription.trim()) {
+      toast.error("Please describe what you want the script to do");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Generate an AutoHotkey v2 script for ${gameName} that performs the following task:
+
+${taskDescription}
+
+Script Type: ${scriptType}
+
+Requirements:
+- Use AutoHotkey v2 syntax
+- Include clear comments explaining each section
+- Add hotkeys to start/stop the script (F1 to toggle, F2 to exit)
+- Include safety features and error handling
+- Make it efficient and reliable
+
+Return ONLY the AutoHotkey code without explanations.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            script: { type: "string" },
+            hotkeys: { type: "string" },
+            description: { type: "string" }
+          }
+        }
+      });
+
+      setGeneratedScript(response.script || "Generation failed");
+      toast.success("Your game automation script is ready!");
+    } catch (error) {
+      toast.error("Unable to generate the script. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadScript = (code, filename = "script.ahk") => {
+    const blob = new Blob([code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const loadTemplate = (template) => {
+    const templates = {
+      autoclicker: "Create an auto-clicker that clicks the left mouse button every 100 milliseconds when F1 is pressed. Press F2 to pause/resume, and F3 to exit the script completely.",
+      autofarmer: "Create an auto-farmer for Pet Simulator 99 that automatically clicks on coins and moves between farming zones. Include anti-AFK features.",
+      autohatch: "Create a Pet Simulator 99 auto-hatcher that repeatedly presses E to hatch eggs, with configurable delays between hatches."
+    };
+    setTaskDescription(templates[template]);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-gray-950 dark:via-purple-950/20 dark:to-gray-900">
+      <header className="border-b bg-background/80 backdrop-blur-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link to={createPageUrl("Home")}>
+              <Button variant="outline" size="icon">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+            <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+              Script Generator
+            </h1>
+          </div>
+          <Badge variant="secondary">
+            <Sparkles className="w-3 h-3 mr-1" />
+            AI Powered
+          </Badge>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+        <Tabs defaultValue="convert" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+            <TabsTrigger value="convert">
+              <Code className="w-4 h-4 mr-2" />
+              Python Converter
+            </TabsTrigger>
+            <TabsTrigger value="generate">
+              <Wand2 className="w-4 h-4 mr-2" />
+              Game Scripts
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="convert" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Python to AutoHotkey Converter</CardTitle>
+                <CardDescription>
+                  Convert Python scripts to AutoHotkey v2 with AI assistance
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Python Code</label>
+                  <Textarea
+                    placeholder="Paste your Python code here..."
+                    value={pythonCode}
+                    onChange={(e) => setPythonCode(e.target.value)}
+                    className="font-mono text-sm min-h-[200px]"
+                  />
+                </div>
+
+                <Button onClick={convertPythonToAHK} disabled={loading} className="w-full" size="lg">
+                  {loading ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Converting...</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4 mr-2" />Convert to AHK</>
+                  )}
+                </Button>
+
+                {convertedCode && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-medium">AutoHotkey Code</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadScript(convertedCode, "converted.ahk")}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={convertedCode}
+                      readOnly
+                      className="font-mono text-sm min-h-[200px] bg-muted"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="generate" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Game Script Generator</CardTitle>
+                <CardDescription>
+                  Generate custom AutoHotkey scripts for game automation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Game Name</label>
+                  <Input
+                    placeholder="e.g., Pet Simulator 99"
+                    value={gameName}
+                    onChange={(e) => setGameName(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Script Type</label>
+                  <Select value={scriptType} onValueChange={setScriptType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Auto-Clicker">Auto-Clicker</SelectItem>
+                      <SelectItem value="Auto-Farmer">Auto-Farmer</SelectItem>
+                      <SelectItem value="Auto-Hatcher">Auto-Hatcher</SelectItem>
+                      <SelectItem value="Anti-AFK">Anti-AFK</SelectItem>
+                      <SelectItem value="Custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Task Description</label>
+                  <Textarea
+                    placeholder="Describe what you want the script to do..."
+                    value={taskDescription}
+                    onChange={(e) => setTaskDescription(e.target.value)}
+                    className="min-h-[150px]"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => loadTemplate("autoclicker")}>
+                    Auto-Clicker Template
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => loadTemplate("autofarmer")}>
+                    Farmer Template
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => loadTemplate("autohatch")}>
+                    Hatcher Template
+                  </Button>
+                </div>
+
+                <Button onClick={generateGameScript} disabled={loading} className="w-full" size="lg">
+                  {loading ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</>
+                  ) : (
+                    <><Wand2 className="w-4 h-4 mr-2" />Generate Script</>
+                  )}
+                </Button>
+
+                {generatedScript && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-medium">Generated Script</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadScript(generatedScript, `${gameName.replace(/\s+/g, '_')}_script.ahk`)}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={generatedScript}
+                      readOnly
+                      className="font-mono text-sm min-h-[300px] bg-muted"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+}
