@@ -1,0 +1,74 @@
+==============================================================================================================
+API Integration
+--------------------------------------------------------------------------------------------------------------
+Get copy-paste examples for API integration.
+-----------------------------------------------
+Example: API Operations
+---------------------------------------------------------------------
+Select an entity to generate code examples for reading and updating:
+----------------------------------------------------------------------
+JavaScript
+// JavaScript Example: Reading Entities
+// Filterable fields: 
+async function fetchEntityNameEntities() {
+    const response = await fetch(`https://app.base44.com/api/apps/6955128534c9a71f81bfc108/entities/EntityName`, {
+        headers: {
+            'api_key': '**********************', // or use await User.me() to get the API key
+            'Content-Type': 'application/json'
+        }
+    });
+    const data = await response.json();
+    console.log(data);
+}
+
+// JavaScript Example: Updating an Entity
+// Filterable fields: 
+async function updateEntityNameEntity(entityId, updateData) {
+    const response = await fetch(`https://app.base44.com/api/apps/6955128534c9a71f81bfc108/entities/EntityName/${entityId}`, {
+        method: 'PUT',
+        headers: {
+            'api_key': '***********************', // or use await User.me() to get the API key
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+    });
+    const data = await response.json();
+    console.log(data);
+}
+=================================================================================================================
+# Python Example: Reading Entities
+--------------------------------------------------
+# Filterable fields: 
+---------------------------
+import requests
+
+def make_api_request(api_path, method='GET', data=None):
+    url = f'https://app.base44.com/api/{api_path}'
+    headers = {
+        'api_key': '***********************',
+        'Content-Type': 'application/json'
+    }
+    if method.upper() == 'GET':
+        response = requests.request(method, url, headers=headers, params=data)
+    else:
+        response = requests.request(method, url, headers=headers, json=data)
+    response.raise_for_status()
+    return response.json()
+
+entities = make_api_request(f'apps/6955128534c9a71f81bfc108/entities/EntityName')
+print(entities)
+
+# Python Example: Updating an Entity
+# Filterable fields: 
+def update_entity(entity_id, update_data):
+    response = requests.put(
+        f'https://app.base44.com/api/apps/6955128534c9a71f81bfc108/entities/EntityName/{entity_id}',
+        headers={
+            'api_key': '***********************',
+            'Content-Type': 'application/json'
+        },
+        json=update_data
+    )
+    response.raise_for_status()
+    return response.json()
+================================================================================================================
