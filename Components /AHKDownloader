@@ -1,0 +1,223 @@
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, Code } from "lucide-react";
+
+export default function AHKDownloader() {
+  const ahkScriptContent = `#Requires AutoHotkey v2.0
+#SingleInstance Force
+
+; Create GUI
+MyGui := Gui("+Resize", "PS99 AI Script Generator")
+MyGui.SetFont("s10")
+
+; Add controls
+MyGui.Add("Text", "x10 y10 w460", "Web App URL:")
+UrlInput := MyGui.Add("Edit", "x10 y30 w460", "https://ps99-ahk-aigen-milamoo12340.base44.app")
+
+MyGui.Add("Text", "x10 y70", "Game Name:")
+GameInput := MyGui.Add("Edit", "x10 y90 w460", "Pet Simulator 99")
+
+MyGui.Add("Text", "x10 y130", "Script Type:")
+TypeDDL := MyGui.Add("DropDownList", "x10 y150 w460", ["Auto-Clicker", "Auto-Farmer", "Auto-Hatcher", "Anti-AFK", "Custom"])
+TypeDDL.Choose(1)
+
+MyGui.Add("Text", "x10 y190", "Task Description:")
+TaskInput := MyGui.Add("Edit", "x10 y210 w460 h80 Multi", "Describe what you want the script to do...")
+
+GenerateBtn := MyGui.Add("Button", "x10 y300 w225 h35", "Generate Script")
+GenerateBtn.OnEvent("Click", GenerateScript)
+
+SaveBtn := MyGui.Add("Button", "x245 y300 w225 h35", "Save as .ahk")
+SaveBtn.OnEvent("Click", SaveScript)
+
+MyGui.Add("Text", "x10 y345", "Generated Script:")
+OutputBox := MyGui.Add("Edit", "x10 y365 w460 h200 Multi ReadOnly -Wrap")
+
+CopyBtn := MyGui.Add("Button", "x10 y575 w150 h30", "Copy to Clipboard")
+CopyBtn.OnEvent("Click", (*) => A_Clipboard := OutputBox.Value)
+
+ClearBtn := MyGui.Add("Button", "x170 y575 w150 h30", "Clear Output")
+ClearBtn.OnEvent("Click", (*) => OutputBox.Value := "")
+
+StatusBar := MyGui.Add("Text", "x330 y575 w140 h30 Center c0066FF", "Ready")
+
+MyGui.OnEvent("Close", (*) => ExitApp())
+MyGui.Show("w480 h620")
+return
+
+GenerateScript(GuiCtrlObj, Info) {
+    appUrl := UrlInput.Value
+    game := GameInput.Value
+    task := TaskInput.Value
+    scriptType := TypeDDL.Text
+    
+    if (task = "" || task = "Describe what you want the script to do...") {
+        MsgBox("Please enter a task description!", "Error", "Icon!")
+        StatusBar.Value := "Error: No task"
+        return
+    }
+    
+    if (appUrl = "") {
+        MsgBox("Please enter a web app URL!", "Error", "Icon!")
+        StatusBar.Value := "Error: No URL"
+        return
+    }
+    
+    StatusBar.Value := "Generating..."
+    OutputBox.Value := "Generating script, please wait..."
+    
+    ; URL encode the parameters
+    taskEncoded := UrlEncode(task)
+    gameEncoded := UrlEncode(game)
+    typeEncoded := UrlEncode(scriptType)
+    
+    ; Build the API URL (use backend function endpoint)
+    url := appUrl "/api/generateScript?task=" taskEncoded "&game=" gameEncoded "&type=" typeEncoded
+    
+    try {
+        result := FetchScriptFromAPI(url)
+        if (result = "") {
+            OutputBox.Value := "Error: Empty response from server"
+            StatusBar.Value := "Error: Empty response"
+        } else {
+            OutputBox.Value := result
+            StatusBar.Value := "Script generated successfully!"
+        }
+    } catch Error as err {
+        OutputBox.Value := "Error: " err.Message
+        StatusBar.Value := "Error: " err.Message
+    }
+}
+
+SaveScript(GuiCtrlObj, Info) {
+    scriptContent := OutputBox.Value
+    
+    if (scriptContent = "" || scriptContent = "Generating script, please wait...") {
+        MsgBox("No script to save!", "Error", "Icon!")
+        return
+    }
+    
+    filePath := FileSelect(2, A_Desktop "\\", "Save AutoHotkey Script", "AutoHotkey Files (*.ahk)")
+    if (filePath != "") {
+        try {
+            FileDelete(filePath)
+        }
+        FileAppend(scriptContent, filePath)
+        MsgBox("Script saved to: " filePath, "Success", "Icon!")
+        StatusBar.Value := "Script saved!"
+    }
+}
+
+FetchScriptFromAPI(url) {
+    try {
+        http := ComObject("WinHttp.WinHttpRequest.5.1")
+        http.Open("GET", url, false)
+        http.Option[4] := 0x3300  ; Ignore SSL certificate errors
+        http.Send()
+        
+        if (http.Status != 200) {
+            throw Error("HTTP " http.Status ": " http.StatusText)
+        }
+        
+        html := http.ResponseText
+        
+        if (html = "") {
+            throw Error("Empty response from server")
+        }
+        
+        ; Parse the HTML to extract the script from <pre id="script-output">...</pre>
+        if (RegExMatch(html, "is)<pre[^>]*id=['` + "`" + `"]script-output['` + "`" + `"][^>]*>(.*?)</pre>", &match)) {
+            result := match[1]
+            result := DecodeHtmlEntities(result)
+            return result
+        } else {
+            throw Error("Could not find script-output element in response")
+        }
+    } catch Error as err {
+        throw Error("API Error: " err.Message)
+    }
+}
+
+DecodeHtmlEntities(html) {
+    ; Decode common HTML entities
+    html := StrReplace(html, "&lt;", "<")
+    html := StrReplace(html, "&gt;", ">")
+    html := StrReplace(html, "&amp;", "&")
+    html := StrReplace(html, "&quot;", Chr(34))
+    html := StrReplace(html, "&apos;", "'")
+    html := StrReplace(html, "&#39;", "'")
+    html := StrReplace(html, "&nbsp;", " ")
+    return html
+}
+
+UrlEncode(str) {
+    ; Simple URL encoding for common characters
+    encoded := ""
+    loop Parse str {
+        char := A_LoopField
+        if (char ~= "[a-zA-Z0-9\\-_.~]") {
+            encoded .= char
+        } else {
+            encoded .= "%" Format("{:02X}", Ord(char))
+        }
+    }
+    return encoded
+}`;
+
+  const downloadAHKScript = () => {
+    const blob = new Blob([ahkScriptContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PS99_AI_Generator.ahk";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Card className="border-2 border-blue-200 dark:border-blue-800">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+            <Code className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <CardTitle>Desktop AHK Client</CardTitle>
+            <CardDescription>
+              Download the AHK script that connects to this app's AI
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg space-y-2 text-sm">
+          <p className="font-medium">✨ Features:</p>
+          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+            <li>Desktop GUI for generating AHK scripts</li>
+            <li>Connect directly to this web app's AI</li>
+            <li>No API keys needed - uses your app</li>
+            <li>Python to AHK converter included</li>
+            <li>Save and copy generated scripts</li>
+          </ul>
+        </div>
+        
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg text-sm space-y-2">
+          <p className="font-medium text-amber-900 dark:text-amber-100">📋 How to use:</p>
+          <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+            <li>Download the .ahk file below</li>
+            <li>Run it with AutoHotkey v2</li>
+            <li>Enter your task description</li>
+            <li>Click "Generate Script"</li>
+            <li>The script connects to this app and uses AI!</li>
+          </ol>
+        </div>
+
+        <Button onClick={downloadAHKScript} className="w-full" size="lg">
+          <Download className="w-4 h-4 mr-2" />
+          Download AHK Desktop Client
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
