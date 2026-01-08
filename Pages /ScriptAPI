@@ -1,0 +1,53 @@
+import React, { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
+
+export default function ScriptAPI() {
+  const [output, setOutput] = useState("Loading...");
+  
+  useEffect(() => {
+    const generateScript = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const task = params.get('task');
+        const game = params.get('game') || 'Roblox';
+        const type = params.get('type') || 'Auto-Clicker';
+        
+        if (!task) {
+          setOutput('ERROR: Missing task parameter');
+          return;
+        }
+
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt: `Generate an AutoHotkey v2 script for ${game} that performs the following task:
+
+${task}
+
+Script Type: ${type}
+
+Requirements:
+- Use AutoHotkey v2 syntax
+- Include clear comments explaining each section
+- Add hotkeys to start/stop the script (F1 to toggle, F2 to exit)
+- Include safety features and error handling
+- Make it efficient and reliable
+
+Return ONLY the AutoHotkey code without explanations.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              script: { type: "string" }
+            }
+          }
+        });
+
+        setOutput(response.script || 'ERROR: Generation failed');
+      } catch (error) {
+        setOutput('ERROR: ' + error.message);
+      }
+    };
+
+    generateScript();
+  }, []);
+
+  return <pre id="script-output">{output}</pre>;
+}
