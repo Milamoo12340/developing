@@ -1,0 +1,195 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Search, Trophy, TrendingUp, Award, Loader2 } from "lucide-react";
+import { createPageUrl } from "@/utils";
+import toast from "react-hot-toast";
+
+export default function PS99Tools() {
+  const [clanSearchInput, setClanSearchInput] = useState("");
+  const [clanData, setClanData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const searchClan = async () => {
+    if (!clanSearchInput.trim()) {
+      toast.error("Please enter a clan name to search");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Search for Pet Simulator 99 clan named "${clanSearchInput}" and provide comprehensive statistics including points, members, rank, and any other available data. Format the response as structured data.`,
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            points: { type: "number" },
+            members: { type: "number" },
+            rank: { type: "number" },
+            description: { type: "string" },
+            found: { type: "boolean" }
+          }
+        }
+      });
+
+      setClanData(response);
+      
+      if (!response.found) {
+        toast.error("Could not find a clan with that name");
+      }
+    } catch (error) {
+      toast.error("Unable to search for clan. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatNumber = (num) => {
+    if (!num) return "0";
+    if (num >= 1000000) return (num / 1000000).toFixed(2) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(2) + "K";
+    return num.toString();
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-violet-950/20 dark:to-gray-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to={createPageUrl("Home")}>
+              <Button variant="outline" size="icon">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-600 bg-clip-text text-transparent">
+                Pet Simulator 99 Tools
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Real-time clan tracking and game statistics
+              </p>
+            </div>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            AI Powered
+          </Badge>
+        </div>
+
+        <Tabs defaultValue="clans" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3 gap-1">
+            <TabsTrigger value="clans">
+              <Trophy className="w-4 h-4 mr-2" />
+              Clan Tracker
+            </TabsTrigger>
+            <TabsTrigger value="rap">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              RAP Checker
+            </TabsTrigger>
+            <TabsTrigger value="battle">
+              <Award className="w-4 h-4 mr-2" />
+              Battle Info
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="clans" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Clan Search</CardTitle>
+                <CardDescription>
+                  Search for any clan by name to view detailed statistics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter clan name..."
+                    value={clanSearchInput}
+                    onChange={(e) => setClanSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && searchClan()}
+                    className="h-12 text-lg"
+                  />
+                  <Button onClick={searchClan} disabled={loading} className="h-12 px-6">
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4 mr-2" />
+                    )}
+                    Search
+                  </Button>
+                </div>
+
+                {clanData && clanData.found && (
+                  <div className="mt-6 space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Name</p>
+                        <p className="font-bold text-lg">{clanData.name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Points</p>
+                        <p className="font-bold text-lg text-violet-600">
+                          {formatNumber(clanData.points)}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Members</p>
+                        <p className="font-bold text-lg">{clanData.members}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Rank</p>
+                        <p className="font-bold text-lg">#{clanData.rank}</p>
+                      </div>
+                    </div>
+                    {clanData.description && (
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-sm">{clanData.description}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rap" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>RAP Checker</CardTitle>
+                <CardDescription>
+                  Check Recent Average Prices for pets and items
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  RAP checker functionality - Search for pets and items to see their current market value
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="battle" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Clan Battle Information</CardTitle>
+                <CardDescription>
+                  Current clan battle status and rankings
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  View active clan battles and competitive rankings
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
