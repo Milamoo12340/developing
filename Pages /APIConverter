@@ -1,0 +1,55 @@
+import React, { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
+
+export default function APIConverter() {
+  const [output, setOutput] = useState("Initializing...");
+  
+  useEffect(() => {
+    const convertCode = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const python = params.get('python');
+        
+        if (!python) {
+          setOutput('ERROR: Missing python parameter');
+          return;
+        }
+
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt: `Convert the following Python code to AutoHotkey v2 syntax. Maintain the same functionality and logic. Provide clear comments for each section.
+
+Python Code:
+\`\`\`python
+${decodeURIComponent(python)}
+\`\`\`
+
+Return ONLY the AutoHotkey code without any explanations.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              ahk_code: { type: "string" }
+            }
+          }
+        });
+
+        setOutput(response.ahk_code || 'ERROR: Conversion failed');
+      } catch (error) {
+        setOutput('ERROR: ' + error.message);
+      }
+    };
+
+    convertCode();
+  }, []);
+
+  return (
+    <pre id="script-output" style={{ 
+      fontFamily: 'monospace', 
+      whiteSpace: 'pre-wrap', 
+      wordWrap: 'break-word',
+      padding: '10px',
+      margin: 0,
+      fontSize: '12px',
+      display: 'block'
+    }}>{output}</pre>
+  );
+}
