@@ -1,0 +1,7 @@
+possible calls, try and test all.
+
+apiUrl := "https://ps99-ahk-aigen-milamoo12340.base44.app/api/apps/6955128534c9a71f81bfc108/integration-endpoints/Core/InvokeLLM" 
+appId := "6955128534c9a71f81bfc108" 
+APP_URL := "https://ps99-ahk-aigen-milamoo12340.base44.app"
+App_PAGE_URL :=APP_URL := "https://ps99-ahk-aigen-milamoo12340.base44.app/ScriptGenerator"
+METHOD := "POST /api/apps/6955128534c9a71f81bfc108/integration-endpoints/Core/InvokeLLM HTTP/1.1" 
