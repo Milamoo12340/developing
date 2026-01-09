@@ -11,3 +11,23 @@ Authorization := "Bearer
                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqYWNxZ2Ft
                  aW5ncGNAb3V0bG9vay5jb20iLCJleHAiOjE3NzU1NDk5NjMsImlhdCI6M
                  Tc2Nzc3Mzk2M30.PIVcy2VEeaHthbYEVJ00yKH7zVynL9Hr0zRDuL5SvN8"
+
+InvokeLLM := fetch("https://ps99-ahk-aigen-milamoo12340.base44.app/api/apps/6955128534c9a71f81bfc108/integration-endpoints/Core/InvokeLLM", {
+  "headers": {
+    "accept": "application/json",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json",
+    "priority": "u=1, i",
+    "sec-ch-ua": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "x-app-id": "6955128534c9a71f81bfc108",
+    "x-origin-url": "https://ps99-ahk-aigen-milamoo12340.base44.app/ScriptGenerator",
+    "Referer": "https://ps99-ahk-aigen-milamoo12340.base44.app/ScriptGenerator"
+  },
+  "body": "{\"prompt\":\"Generate an AutoHotkey v2 script for Pet Simulator 99 that performs the following task:\\n\\nanti afk roblox\\n\\nScript Type: Auto-Clicker\\n\\nRequirements:\\n- Use AutoHotkey v2 syntax\\n- Include clear comments explaining each section\\n- Add hotkeys to start/stop the script (F1 to toggle, F2 to exit)\\n- Include safety features and error handling\\n- Make it efficient and reliable\\n\\nReturn ONLY the AutoHotkey code without explanations.\",\"response_json_schema\":{\"type\":\"object\",\"properties\":{\"script\":{\"type\":\"string\"},\"hotkeys\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"}}}}",
+  "method": "POST"
+});
